@@ -1,5 +1,6 @@
 # Ignore environment variables
 .env
+.env.sample
 
 # Keep directories but ignore their contents
 shared/*
@@ -10,3 +11,28 @@ n8n/*
 !n8n/backup/
 n8n/backup/*
 !n8n/backup/.gitkeep
+
+flowise/*
+!flowise/.gitkeep
+
+n8n-tool-workflows/*
+!n8n-tool-workflows/.gitkeep
+
+# Docker volumes
+postgres_storage/
+n8n_storage/
+qdrant_storage/
+open-webui/
+flowise/
+anythingllm_storage/
+# ollama_storage/  # Uncomment if using containerized Ollama
+
+# OS specific files
+.DS_Store
+Thumbs.db
+
+# Editor directories and files
+.idea/
+.vscode/
+*.swp
+*.swo
