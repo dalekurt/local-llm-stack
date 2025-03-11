@@ -1,0 +1,12 @@
+# Ignore environment variables
+.env
+
+# Keep directories but ignore their contents
+shared/*
+!shared/.gitkeep
+
+n8n/*
+!n8n/.gitkeep
+!n8n/backup/
+n8n/backup/*
+!n8n/backup/.gitkeep
