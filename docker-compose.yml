@@ -1,11 +1,12 @@
 volumes:
-  n8n_storage:
-  postgres_storage:
-  qdrant_storage:
-  open-webui:
-  flowise:
-  anythingllm_storage:
-    # ollama_storage:  # Uncomment if using containerized Ollama
+  # All volumes are mapped directly to host paths in each service
+  n8n_storage: {}
+  postgres_storage: {}
+  qdrant_storage: {}
+  openwebui_storage: {}
+  flowise_storage: {}
+  anythingllm_storage: {}
+  pipelines_storage: {}
 
 
 networks:
@@ -28,8 +29,6 @@ x-n8n: &service-n8n
     - postgres
 
 services:
-  # Ollama service - commented out by default since Ollama is installed natively
-  # Uncomment this service if you want to run Ollama in a container
   # ollama:
   #   image: ollama/ollama:latest
   #   container_name: ollama
@@ -39,9 +38,9 @@ services:
   #     - "11434:11434"
   #   volumes:
   #     - ollama_storage:/root/.ollama
-  #   # If using containerized Ollama, update OLLAMA_BASE_PATH in .env to:
-  #   # OLLAMA_BASE_PATH=http://ollama:11434
-  #   # EMBEDDING_BASE_PATH=http://ollama:11434
+  # Note: When using containerized Ollama, make sure to update in .env:
+  # OLLAMA_BASE_PATH=http://ollama:11434
+  # EMBEDDING_BASE_PATH=http://ollama:11434
 
   flowise:
     image: flowiseai/flowise
@@ -49,14 +48,13 @@ services:
     restart: unless-stopped
     container_name: flowise
     environment:
-      - PORT=${FLOWISE_PORT:-3001}
+      - PORT=${FLOWISE_PORT:-3010}
     ports:
-      - ${FLOWISE_PORT:-3001}:3001
+      - ${FLOWISE_PORT:-3001}:3010
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ~/.flowise:/root/.flowise
-    entrypoint: /bin/sh -c "sleep 3; flowise start"
+      - ./data/flowise:/root/.flowise
 
   anythingllm:
     image: mintplexlabs/anythingllm
@@ -85,8 +83,7 @@ services:
       - TTS_PROVIDER=${TTS_PROVIDER}
       - PASSWORDMINCHAR=${PASSWORDMINCHAR}
     volumes:
-      - anythingllm_storage:/app/server/storage
-    # When using native Ollama, add host.docker.internal to allow container to access host
+      - ./data/anythingllm:/app/server/storage
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -99,16 +96,26 @@ services:
     container_name: open-webui
     ports:
       - "11500:8080"
-    # When using native Ollama, uncomment this to allow container to access host
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - open-webui:/app/backend/data
+      - ./data/openwebui:/app/backend/data
+
+  pipelines:
+    image: ghcr.io/open-webui/pipelines:main
+    networks: [ 'ai-network' ]
+    restart: unless-stopped
+    container_name: pipelines
+    volumes:
+      - ./data/pipelines:/app/pipelines
+    environment:
+      - PIPELINES_API_KEY=0p3n-w3bu!
 
   postgres:
     image: postgres:16-alpine
     networks: [ 'ai-network' ]
     restart: unless-stopped
+    container_name: postgres
     ports:
       - 5432:5432
     environment:
@@ -116,7 +123,7 @@ services:
       - POSTGRES_PASSWORD
       - POSTGRES_DB
     volumes:
-      - postgres_storage:/var/lib/postgresql/data
+      - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
       test: [ 'CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}' ]
       interval: 5s
@@ -143,7 +150,7 @@ services:
     ports:
       - 5678:5678
     volumes:
-      - n8n_storage:/home/node/.n8n
+      - ./data/n8n:/home/node/.n8n
       - ./n8n/backup:/backup
       - ./shared:/data/shared
       - ./shared:/home/node/host_mount/shared_drive
@@ -161,4 +168,13 @@ services:
     ports:
       - 6333:6333
     volumes:
-      - qdrant_storage:/qdrant/storage
+      - ./data/qdrant:/qdrant/storage
+
+  watchtower:
+      image: containrrr/watchtower
+      container_name: watchtower
+      networks: [ 'ai-network' ]
+      restart: unless-stopped
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+      command: --interval 30 --cleanup --label-enable --monitor-only --label-filter=ai-network
