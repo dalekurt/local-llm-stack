@@ -69,11 +69,11 @@ services:
       - STORAGE_DIR=${STORAGE_DIR}
       - JWT_SECRET=${JWT_SECRET}
       - LLM_PROVIDER=${LLM_PROVIDER}
-      - OLLAMA_BASE_PATH=${OLLAMA_BASE_PATH}
+      - OLLAMA_BASE_PATH=http://host.docker.internal:11434
       - OLLAMA_MODEL_PREF=${OLLAMA_MODEL_PREF}
       - OLLAMA_MODEL_TOKEN_LIMIT=${OLLAMA_MODEL_TOKEN_LIMIT}
       - EMBEDDING_ENGINE=${EMBEDDING_ENGINE}
-      - EMBEDDING_BASE_PATH=${EMBEDDING_BASE_PATH}
+      - EMBEDDING_BASE_PATH=http://host.docker.internal:11434
       - EMBEDDING_MODEL_PREF=${EMBEDDING_MODEL_PREF}
       - EMBEDDING_MODEL_MAX_CHUNK_LENGTH=${EMBEDDING_MODEL_MAX_CHUNK_LENGTH}
       - VECTOR_DB=${VECTOR_DB}
@@ -177,4 +177,4 @@ services:
       restart: unless-stopped
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock
-      command: --interval 30 --cleanup --label-enable --monitor-only --label-filter=ai-network
+      command: --interval 30 --cleanup --label-enable --monitor-only --scope ai-network
