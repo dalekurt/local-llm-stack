@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- Fixed PostgreSQL container permission issues by switching from bind mount to named volume
+- Resolved "chown: /var/lib/postgresql/data: Permission denied" errors in PostgreSQL container
+
 ## [0.2.0] - 2025-06-06
 
 ### Fixed
